@@ -5,40 +5,25 @@ import joblib
 import sys
 import os
 
-def predict_proba(url):
+def predict(p_year, p_mileage, p_state, p_make, p_model):
+    model = joblib.load(os.path.dirname(__file__) + '/vehicle_price_model.pkl')    
+    encoder = joblib.load(os.path.dirname(__file__) + '/encoder.joblib')
+    preprocessor = joblib.load(os.path.dirname(__file__) + '/preprocessor.joblib')
 
-    clf = joblib.load(os.path.dirname(__file__) + '/phishing_clf.pkl') 
-
-    url_ = pd.DataFrame([url], columns=['url'])
+    record = pd.DataFrame(
+        [[p_year, p_mileage, p_state, p_make, p_model]],
+        columns=['Year', 'Mileage', 'State', 'Make', 'Model']
+    )
   
-    # Create features
-    keywords = ['https', 'login', '.php', '.html', '@', 'sign']
-    for keyword in keywords:
-        url_['keyword_' + keyword] = url_.url.str.contains(keyword).astype(int)
+    # Transform categorical values
+    record_encoded = encoder.transform(record)    
 
-    url_['lenght'] = url_.url.str.len() - 2
-    domain = url_.url.str.split('/', expand=True).iloc[:, 2]
-    url_['lenght_domain'] = domain.str.len()
-    url_['isIP'] = (url_.url.str.replace('.', '') * 1).str.isnumeric().astype(int)
-    url_['count_com'] = url_.url.str.count('com')
-
+    # Scale numerical values
+    record_processed  = preprocessor.transform(record_encoded)
+    
     # Make prediction
-    p1 = clf.predict_proba(url_.drop('url', axis=1))[0,1]
+    p1 = model.predict(record_processed)[0]
 
     return p1
 
-
-if __name__ == "__main__":
-    
-    if len(sys.argv) == 1:
-        print('Please add an URL')
-        
-    else:
-
-        url = sys.argv[1]
-
-        p1 = predict_proba(url)
-        
-        print(url)
-        print('Probability of Phishing: ', p1)
         
