@@ -12,51 +12,38 @@ CORS(app)  # Enable CORS for all routes and origins
 api = Api(
     app, 
     version='1.0', 
-    title='Predicción de precios de vehículos usados API',
-    description='Predicción de precios de vehículos usados API')
+    title='Clasificación de generos de películas',
+    description='Clasificación de generos de películas')
 
 ns = api.namespace('predict', 
-     description='Price Regression')
+     description='Clasificador de generos de peliculas')
    
 parser = api.parser()
+
+parser.add_argument(
+    'title', 
+    type=str, 
+    required=True, 
+    help='Title', 
+    location='json')
+
+parser.add_argument(
+    'plot', 
+    type=str, 
+    required=True, 
+    help='Plot', 
+    location='json')
 
 parser.add_argument(
     'year', 
     type=int, 
     required=True, 
-    help='Año del vehículo', 
-    location='args')
+    help='Year', 
+    location='json')
 
-parser.add_argument(
-    'mileage', 
-    type=int, 
-    required=True, 
-    help='Kilometraje', 
-    location='args')
-
-parser.add_argument(
-    'state', 
-    type=str, 
-    required=True, 
-    help='Estado', 
-    location='args')
-
-parser.add_argument(
-    'make', 
-    type=str, 
-    required=True, 
-    help='Marca', 
-    location='args')
-
-parser.add_argument(
-    'model', 
-    type=str, 
-    required=True, 
-    help='Modelo', 
-    location='args')
 
 resource_fields = api.model('Resource', {
-    'result': fields.Float,
+    'result': fields.String,
 })
 
 @ns.route('/')
@@ -64,11 +51,11 @@ class PriceApi(Resource):
 
     @api.doc(parser=parser)
     @api.marshal_with(resource_fields)
-    def get(self):
+    def post(self):
         args = parser.parse_args()
 
         return {
-            "result": predict(args['year'], args['mileage'], args['state'], args['make'], args['model'])
+            "result": predict(args['title'], args['plot'], args['year'])
         }, 200
     
     
